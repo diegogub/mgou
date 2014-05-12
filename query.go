@@ -2,6 +2,7 @@ package mgou
 
 import(
     "reflect"
+    "labix.org/v2/mgo/bson"
 )
 
 type Query struct {
@@ -10,6 +11,13 @@ type Query struct {
     Page    int           `json:"page"`
     Limit   int           `json:"limit"`
     Result  interface{}   `json:"result"`
+}
+
+func NewQuery() *Query{
+    var q Query
+    Q := bson.M{}
+    q.Q = Q
+    return &q
 }
 
 func (q *Query) Like(m Modeler){
