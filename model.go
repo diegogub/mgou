@@ -1,10 +1,12 @@
 package mgou
 
 import(
+    "log"
     "reflect"
     "labix.org/v2/mgo/bson"
     "labix.org/v2/mgo"
     "strings"
+    "time"
 )
 
 // Model interface
@@ -144,10 +146,18 @@ func Save(m interface{},db *mgo.Database,col string,quick bool) (Error){
             if doc.Id == ""{
                 // set Id
                 d := reflectValue(m).FieldByName("Doc").FieldByName("Id")
-                id :=bson.NewObjectId()
+                t := reflectValue(m).FieldByName("Doc").FieldByName("Created")
+                id := bson.NewObjectId()
+                now := time.Now()
+                log.Println(now)
                 d.Set(reflect.ValueOf(id))
+                t.Set(reflect.ValueOf(now))
+                log.Println(m)
                 e = db.C(col).Insert(m)
             }else{
+                t := reflectValue(m).FieldByName("Doc").FieldByName("Updated")
+                now := time.Now()
+                t.Set(reflect.ValueOf(now))
                 e = db.C(col).UpdateId(doc.Id,m)
             }
         }
