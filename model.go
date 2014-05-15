@@ -21,12 +21,24 @@ type SubModeler interface{
 }
 
 //Search
-func Search(m Modeler,q *Query) (*mgo.Query){
+func Search(m interface{},col string,q *Query) (*mgo.Query){
     // Do not close session
+    t := reflectValue(m).Type()
+    model := t.Implements(reflect.TypeOf((*Modeler)(nil)).Elem())
+    var res *mgo.Query
     s := Mongo()
-    count, _:= s.DB("").C(m.Collection()).Find(q.Q).Count()
-    q.Count = count
-    res := s.DB("").C(m.Collection()).Find(q.Q).Limit(q.Limit).Skip(q.Limit*q.Page)
+    defer s.Close()
+
+    if model && col == ""{
+      count, _:= s.DB("").C(m.(Modeler).Collection()).Find(q.Q).Count()
+      q.Count = count
+      res = s.DB("").C(m.(Modeler).Collection()).Find(q.Q).Limit(q.Limit).Skip(q.Limit*q.Page)
+    }else{
+      count, _:= s.DB("").C(col).Find(q.Q).Count()
+      q.Count = count
+      res = s.DB("").C(col).Find(q.Q).Limit(q.Limit).Skip(q.Limit*q.Page)
+    }
+
     return res
 }
 

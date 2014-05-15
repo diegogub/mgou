@@ -7,6 +7,8 @@ import(
 
 type Query struct {
     Q       interface{}   `json:"-"`
+    DB      string        `json:"-"`
+    C       string        `json:"col"`
     Count   int           `json:"total"`
     Page    int           `json:"page"`
     Limit   int           `json:"limit"`
