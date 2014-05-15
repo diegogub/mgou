@@ -76,7 +76,7 @@ Save Model into DB - If quick is true, It does not check relations into DB (avoi
         - unique:"-"
 */
 
-func Validate(m interface{},db *mgo.Database,col string,id bson.ObjectId,quick bool,bsonstate string,err Error){
+func validate(m interface{},db *mgo.Database,col string,id bson.ObjectId,quick bool,bsonstate string,err Error){
    checkRequired(m,err)
    checkEnum(m,err)
    if !quick {
@@ -97,16 +97,20 @@ func Validate(m interface{},db *mgo.Database,col string,id bson.ObjectId,quick b
             }
             field := reflectValue(m).FieldByName(fname)
             // All sub structures are not Models
-            Validate(field.Interface(),db,col,id,quick,bsonstate,err)
+            validate(field.Interface(),db,col,id,quick,bsonstate,err)
        }
    }
    return
 }
 
 // Normal Save
-func Save(m interface{},db *mgo.Database,col string,quick bool) (Error){
+func Save(m interface{},db string,col string,quick bool) (Error){
+   ms := Mongo()
+   defer ms.Close()
+   mdb :=  ms.DB(db)
    var field reflect.Value
    var e error
+
    err := NewError()
    // element
    field = reflectValue(m)
@@ -129,17 +133,17 @@ func Save(m interface{},db *mgo.Database,col string,quick bool) (Error){
        col = m.(Modeler).Collection()
        //No errors with custom validation, start normal validation
        if len(err) == 0{
-           Validate(m,db,col,doc.Id,quick,"",err)
+           validate(m,mdb,col,doc.Id,quick,"",err)
        }else{
            return err
        }
    }else{
-       Validate(m,db,col,"",quick,"",err)
+       validate(m,mdb,col,"",quick,"",err)
    }
 
    if len(err) == 0{
         if !model{
-            e = db.C(col).Insert(m)
+            e = mdb.C(col).Insert(m)
         }else{
             // check to update or insert
             if doc.Id == ""{
@@ -150,12 +154,12 @@ func Save(m interface{},db *mgo.Database,col string,quick bool) (Error){
                 now := time.Now()
                 d.Set(reflect.ValueOf(id))
                 t.Set(reflect.ValueOf(now))
-                e = db.C(col).Insert(m)
+                e = mdb.C(col).Insert(m)
             }else{
                 t := reflectValue(m).FieldByName("Doc").FieldByName("Updated")
                 now := time.Now()
                 t.Set(reflect.ValueOf(now))
-                e = db.C(col).UpdateId(doc.Id,m)
+                e = mdb.C(col).UpdateId(doc.Id,m)
             }
         }
    }
