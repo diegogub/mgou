@@ -156,9 +156,9 @@ func Save(m interface{},db string,col string,quick bool) (Error){
                 t.Set(reflect.ValueOf(now))
                 e = mdb.C(col).Insert(m)
             }else{
-                t := reflectValue(m).FieldByName("Doc").FieldByName("Updated")
-                now := time.Now()
-                t.Set(reflect.ValueOf(now))
+                //t := reflectValue(m).FieldByName("Doc").FieldByName("Updated")
+                //now := time.Now()
+                //t.Set(reflect.ValueOf(now))
                 e = mdb.C(col).UpdateId(doc.Id,m)
             }
         }
@@ -403,7 +403,7 @@ func GetDbValue(m bson.M,bsonstate string) string{
     var bmap bson.M = m
     var field reflect.Value
     btags := strings.Split(bsonstate,".")
-    if len(btags) > 0{
+    if len(btags) > 0 {
         //needs to retrieve value from maps of maps
         for _,tag :=range(btags){
             tag = strings.ToLower(tag)
